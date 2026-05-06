@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="icon" href="data:,">
+    <title>Money Merge Puzzle</title>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: #fff;
+            overflow: hidden;
+            font-family: 'Arial Rounded MT Bold', 'Trebuchet MS', sans-serif;
+        }
+
+        #progress {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+            z-index: 1;
+            width: 320px;
+            max-width: 80vw;
+        }
+
+        #title {
+            font-size: 36px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 28px;
+            text-shadow: 0 2px 0 rgba(0, 0, 0, 0.04);
+            white-space: nowrap;
+        }
+
+        #title .w1 { color: #ffb088; }
+        #title .w2 { color: #ffcba4; }
+        #title .w3 { color: #ff9a76; }
+
+        #progress-box {
+            width: 100%;
+            height: 16px;
+            background: rgba(255, 154, 118, 0.12);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        #progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ffb088, #ff9a76);
+            border-radius: 8px;
+            box-shadow: 0 0 6px rgba(255, 154, 118, 0.45);
+            transition: width 0.2s ease-out;
+        }
+
+        #subtitle {
+            margin-top: 14px;
+            font-size: 12px;
+            color: #776265;
+            letter-spacing: 2px;
+        }
+    </style>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1CB5WQ597F"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-1CB5WQ597F');
+    </script>
+</head>
+<body oncontextmenu="return false" onload="start()">
+<div>
+    <div id="progress">
+        <div id="title">
+            <span class="w1">Money</span> <span class="w2">Merge</span> <span class="w3">Puzzle</span>
+        </div>
+        <div id="progress-box">
+            <div id="progress-bar"></div>
+        </div>
+        <div id="subtitle">LOADING</div>
+    </div>
+    <canvas id="canvas" width="800" height="600"></canvas>
+</div>
+<script>
+    async function start() {
+        main()
+    }
+    var maxPercentage = 25;
+    var delay = 500;
+    var bar = document.getElementById("progress-bar");
+    if (bar) {
+    var barStyle = bar.style;
+    barStyle.width = "0%";
+    function barUpdater() {
+      var percentage = parseInt(barStyle.width, 10);
+      if (percentage < maxPercentage) {
+        percentage++;
+        barStyle.width = percentage + "%";
+        delay += 25;
+        setTimeout(barUpdater, delay);
+      }
+    }
+    }
+    setTimeout(barUpdater, delay);
+</script>
+<script type="text/javascript" charset="utf-8" src="teavm/app.js"></script>
+</body>
+</html>

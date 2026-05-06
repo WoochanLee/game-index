@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0E1116">
+    <link rel="icon" href="data:,">
+    <title>Mini game center</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: #0E1116;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                         'Helvetica Neue', Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 560px;
+            margin: 0 auto;
+            padding:
+                calc(env(safe-area-inset-top, 0px) + 12px)
+                24px
+                calc(env(safe-area-inset-bottom, 0px) + 32px);
+        }
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+            height: 32px;
+            margin-bottom: 28px;
+        }
+
+        .close-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            margin-left: -4px;
+            background: none;
+            border: none;
+            padding: 0;
+            color: #ffffff;
+            cursor: pointer;
+        }
+
+        .close-btn svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .titles {
+            margin-bottom: 24px;
+        }
+
+        .titles h1 {
+            margin: 0 0 6px;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+            line-height: 1.15;
+        }
+
+        .titles p {
+            margin: 0;
+            font-size: 15px;
+            color: #8E94A0;
+            line-height: 1.4;
+        }
+
+        .cards {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card {
+            display: block;
+            border: none;
+            padding: 0;
+            background: transparent;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: transform 0.12s ease;
+        }
+
+        .card:active {
+            transform: scale(0.98);
+        }
+
+        .card img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        @media (min-width: 720px) {
+            .titles h1 { font-size: 32px; }
+            .titles p  { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="top-bar">
+        <button class="close-btn" type="button" onclick="closeApp()" aria-label="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.2" stroke-linecap="round">
+                <line x1="6" y1="6" x2="18" y2="18"/>
+                <line x1="18" y1="6" x2="6" y2="18"/>
+            </svg>
+        </button>
+    </div>
+
+    <div class="titles">
+        <h1>Mini game center</h1>
+        <p>Play instantly &mdash; no download needed</p>
+    </div>
+
+    <div class="cards">
+        <a class="card" href="./fruit-pop/">
+            <img src="images/fruit-pop.png" alt="Fruit Pop Pop">
+        </a>
+        <a class="card" href="./2048/">
+            <img src="images/2048.png" alt="Money Merge Puzzle">
+        </a>
+    </div>
+</div>
+
+<script>
+    // Initialize wsid + aid, then fire a SHW page-shown event. Mirrors the
+    // pattern used inside the games' platform bridges.
+    (function () {
+        var charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        function getUUID(len) {
+            var arr = new Uint8Array(len);
+            window.crypto.getRandomValues(arr);
+            var s = '';
+            for (var i = 0; i < len; i++) s += charset.charAt(arr[i] % charset.length);
+            return s;
+        }
+        window.__gameIndexWsid = getUUID(12) + '_' + getUUID(12) + '_' + Date.now();
+        window.__gameIndexAid = '';
+
+        function applyClientInfo(json) {
+            if (!json) return;
+            try {
+                var info = JSON.parse(json);
+                if (info && info.aid) window.__gameIndexAid = info.aid;
+            } catch (e) {
+                console.log('[Index] getClientInformation parse error: ' + e);
+            }
+        }
+
+        var hasIosBridge = !!(window.webkit && window.webkit.messageHandlers
+            && window.webkit.messageHandlers.getClientInformation
+            && typeof window.webkit.messageHandlers.getClientInformation.postMessage === 'function');
+
+        if (window.WebCommonBridge && typeof window.WebCommonBridge.getClientInformation === 'function') {
+            try {
+                applyClientInfo(window.WebCommonBridge.getClientInformation());
+            } catch (e) {
+                console.log('[Index] getClientInformation call error: ' + e);
+            }
+        } else if (hasIosBridge) {
+            window.__gameIndexClientInfoCb = function (json) {
+                applyClientInfo(json);
+                fireShw();
+            };
+            window.webkit.messageHandlers.getClientInformation.postMessage(['__gameIndexClientInfoCb']);
+        }
+
+        var shwFired = false;
+        function fireShw() {
+            if (shwFired) return;
+            shwFired = true;
+            var payload = JSON.stringify({
+                tag: 'GAME_INDEX_Main',
+                cat: 'SHW',
+                wsid: window.__gameIndexWsid || '',
+                aid: window.__gameIndexAid || '',
+                plat: 'app',
+                lan: 'en'
+            });
+            if (window.WebCommonBridge && typeof window.WebCommonBridge.sendWebUserLog === 'function') {
+                window.WebCommonBridge.sendWebUserLog(payload);
+            } else if (window.webkit && window.webkit.messageHandlers
+                       && window.webkit.messageHandlers.sendWebUserLog
+                       && typeof window.webkit.messageHandlers.sendWebUserLog.postMessage === 'function') {
+                window.webkit.messageHandlers.sendWebUserLog.postMessage([payload]);
+            } else {
+                console.log('[Index] log bridge missing: ' + payload);
+            }
+        }
+
+        // Android sync path and no-bridge case fire immediately. iOS waits for
+        // the async callback above; the timeout is a safety net so the event
+        // is sent (with an empty aid) even if iOS never calls back.
+        if (!hasIosBridge) fireShw();
+        setTimeout(fireShw, 1500);
+    })();
+
+    function closeApp() {
+        if (window.WebCommonBridge && typeof window.WebCommonBridge.finish === 'function') {
+            window.WebCommonBridge.finish();
+        } else if (window.webkit && window.webkit.messageHandlers
+                   && window.webkit.messageHandlers.finish
+                   && typeof window.webkit.messageHandlers.finish.postMessage === 'function') {
+            window.webkit.messageHandlers.finish.postMessage({});
+        } else {
+            history.length > 1 ? history.back() : window.close();
+        }
+    }
+</script>
+</body>
+</html>
